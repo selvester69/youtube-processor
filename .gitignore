@@ -1,0 +1,8 @@
+target/
+data/
+tokens/
+app.log
+client_secret.json
+.DS_Store
+*.iml
+.idea/
