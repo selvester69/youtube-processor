@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Free Local YouTube & Shorts AI Hashtag Analyzer</title>
+    <title>Free Local YouTube, Facebook & Instagram AI Hashtag Analyzer</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <style>
@@ -16,6 +16,10 @@
         .btn-youtube { background-color: #cc0000; color: white; border: none; }
         .btn-youtube:hover { background-color: #990000; color: white; }
         .status-pill { font-size: 0.85rem; padding: 4px 10px; border-radius: 20px; }
+        .platform-badge { font-size: 0.75rem; font-weight: 600; text-transform: uppercase; padding: 4px 8px; border-radius: 4px; }
+        .bg-youtube { background-color: #ff0000; color: white; }
+        .bg-facebook { background-color: #1877f2; color: white; }
+        .bg-instagram { background-color: #e4405f; color: white; }
     </style>
 </head>
 <body>
@@ -23,7 +27,7 @@
 <nav class="navbar navbar-expand-lg navbar-dark mb-4">
     <div class="container">
         <a class="navbar-brand d-flex align-items-center gap-2 fw-bold" href="#">
-            <i class="bi bi-youtube text-danger fs-3"></i> Local YouTube AI Hashtag Analyzer
+            <i class="bi bi-play-btn-fill text-danger fs-3"></i> Local Social Video AI Hashtag Analyzer
         </a>
         <div class="d-flex align-items-center gap-3">
             <span id="configStatus" class="status-pill bg-secondary text-white">Checking Config...</span>
@@ -36,30 +40,30 @@
     <div id="alertBox"></div>
 
     <div class="row mb-4 g-3">
-        <div class="col-md-8">
+        <div class="col-md-7">
             <div class="card p-3 d-flex flex-row align-items-center justify-content-between h-100">
                 <div>
                     <h5 class="m-0 fw-bold"><i class="bi bi-cpu text-info me-2"></i> Local AI Engine Status (Ollama / Llama3)</h5>
-                    <small class="text-secondary">Generates high-reach hashtags for YouTube Videos & Shorts locally for $0 costs.</small>
+                    <small class="text-secondary">Generates high-reach viral hashtags for YouTube, Facebook & Instagram locally for $0 costs.</small>
                 </div>
                 <span class="badge bg-success p-2 fs-6"><i class="bi bi-check-circle me-1"></i> Active</span>
             </div>
         </div>
-        <div class="col-md-4">
+        <div class="col-md-5">
             <div class="card p-3 h-100">
-                <h6 class="fw-bold mb-1"><i class="bi bi-diagram-3 text-warning me-2"></i> Extensible Adapter Architecture</h6>
-                <small class="text-secondary" id="registeredAdapters">Registered Adapters: Loading...</small>
+                <h6 class="fw-bold mb-1"><i class="bi bi-diagram-3 text-warning me-2"></i> Extensible Multi-Platform Architecture</h6>
+                <small class="text-secondary" id="registeredAdapters">Active Platform Adapters: Loading...</small>
             </div>
         </div>
     </div>
 
-    <h4 class="fw-bold mb-3"><i class="bi bi-collection-play me-2"></i> Your YouTube Content</h4>
+    <h4 class="fw-bold mb-3"><i class="bi bi-collection-play me-2"></i> Your Multi-Platform Content</h4>
 
     <div id="loadingSpinner" class="text-center my-5">
         <div class="spinner-border text-danger" role="status" style="width: 3rem; height: 3rem;">
             <span class="visually-hidden">Loading...</span>
         </div>
-        <p class="mt-3 text-secondary">Syncing videos from YouTube / Local DB...</p>
+        <p class="mt-3 text-secondary">Syncing content across social platform adapters & local DB...</p>
     </div>
 
     <div class="row g-4" id="videoGrid"></div>
@@ -76,12 +80,18 @@
                 statusEl.innerHTML = '<i class="bi bi-shield-check me-1"></i> OAuth Connected';
             } else {
                 statusEl.className = 'status-pill bg-warning text-dark';
-                statusEl.innerHTML = '<i class="bi bi-info-circle me-1"></i> Demo Mode (Missing client_secret.json)';
+                statusEl.innerHTML = '<i class="bi bi-info-circle me-1"></i> Demo Mode (Missing API Tokens)';
             }
 
             if (data.registeredPlatforms) {
-                document.getElementById('registeredAdapters').innerHTML =
-                    'Active Platform Adapters: <span class="badge bg-primary me-1">' + data.registeredPlatforms.join('</span><span class="badge bg-primary me-1">') + '</span>';
+                const badges = data.registeredPlatforms.map(p => {
+                    let cls = 'bg-primary';
+                    if (p === 'YOUTUBE') cls = 'bg-youtube';
+                    else if (p === 'FACEBOOK') cls = 'bg-facebook';
+                    else if (p === 'INSTAGRAM') cls = 'bg-instagram';
+                    return `<span class="platform-badge ${cls} me-1">${p}</span>`;
+                }).join('');
+                document.getElementById('registeredAdapters').innerHTML = 'Active Adapters: ' + badges;
             }
         } catch (e) {
             console.error('Failed to check status:', e);
@@ -96,7 +106,7 @@
             const videos = await res.json();
             renderVideos(videos);
         } catch (e) {
-            showAlert('danger', 'Failed to fetch videos from server: ' + e.message);
+            showAlert('danger', 'Failed to fetch content from server: ' + e.message);
         } finally {
             document.getElementById('loadingSpinner').style.display = 'none';
         }
@@ -105,20 +115,25 @@
     function renderVideos(videos) {
         const grid = document.getElementById('videoGrid');
         if (!videos || videos.length === 0) {
-            grid.innerHTML = '<div class="col-12"><div class="alert alert-secondary text-center">No videos found.</div></div>';
+            grid.innerHTML = '<div class="col-12"><div class="alert alert-secondary text-center">No content found.</div></div>';
             return;
         }
 
-        grid.innerHTML = videos.map(v => `
+        grid.innerHTML = videos.map(v => {
+            let platformBadge = '<span class="platform-badge bg-youtube"><i class="bi bi-youtube"></i> YouTube</span>';
+            if (v.videoId.startsWith('fb_')) platformBadge = '<span class="platform-badge bg-facebook"><i class="bi bi-facebook"></i> Facebook</span>';
+            else if (v.videoId.startsWith('ig_')) platformBadge = '<span class="platform-badge bg-instagram"><i class="bi bi-instagram"></i> Instagram</span>';
+
+            return `
             <div class="col-md-6 col-lg-4">
                 <div class="card h-100 shadow-sm">
                     <img src="${v.thumbnailUrl || 'https://picsum.photos/300/200'}" class="card-img-top" alt="${v.title}" style="height: 180px; object-fit: cover;">
                     <div class="card-body d-flex flex-column">
                         <div class="d-flex justify-content-between align-items-center mb-2">
+                            ${platformBadge}
                             <span class="badge ${v.short ? 'badge-short' : 'badge-video'}">
-                                ${v.short ? '<i class="bi bi-lightning-fill"></i> Short (9:16)' : '<i class="bi bi-play-btn-fill"></i> Video'}
+                                ${v.short ? '<i class="bi bi-lightning-fill"></i> Short/Reel' : '<i class="bi bi-play-btn-fill"></i> Video'}
                             </span>
-                            <small class="text-secondary"><i class="bi bi-eye"></i> ${v.viewCount ? v.viewCount.toLocaleString() : 0} views</small>
                         </div>
                         <h6 class="card-title fw-bold text-white mb-2">${escapeHtml(v.title)}</h6>
                         <p class="card-text text-secondary small flex-grow-1">${escapeHtml(v.description || 'No description').substring(0, 100)}...</p>
@@ -127,7 +142,7 @@
                             <div class="mt-2 mb-3">
                                 <label class="form-label small text-info fw-bold mb-1"><i class="bi bi-hash"></i> AI Generated Hashtags:</label>
                                 <div class="hashtag-box small">${v.generatedHashtags}</div>
-                                ${v.updatedOnYoutube ? '<span class="badge bg-success mt-1"><i class="bi bi-check2-all"></i> Synced to YouTube</span>' : ''}
+                                ${v.updatedOnYoutube ? '<span class="badge bg-success mt-1"><i class="bi bi-check2-all"></i> Synced to Platform</span>' : ''}
                             </div>
                         ` : ''}
 
@@ -136,13 +151,14 @@
                                 <i class="bi bi-magic me-1"></i> ${v.generatedHashtags ? 'Re-Generate AI Hashtags' : 'Generate AI Hashtags'}
                             </button>
                             <button class="btn btn-youtube btn-sm" id="btn-update-${v.videoId}" onclick="analyzeAndUpdate('${v.videoId}')">
-                                <i class="bi bi-upload me-1"></i> Analyze & Update YouTube
+                                <i class="bi bi-upload me-1"></i> Analyze & Update Platform
                             </button>
                         </div>
                     </div>
                 </div>
             </div>
-        `).join('');
+            `;
+        }).join('');
     }
 
     async function generateHashtags(videoId) {
@@ -163,14 +179,14 @@
 
     async function analyzeAndUpdate(videoId) {
         const btn = document.getElementById(`btn-update-${videoId}`);
-        if (btn) btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Syncing to YouTube...';
+        if (btn) btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Syncing to Platform...';
         try {
             const res = await fetch(`/api/analyze-and-update/${videoId}`, { method: 'POST' });
             if (res.ok) {
-                showAlert('success', 'Hashtags generated and YouTube video description updated!');
+                showAlert('success', 'Hashtags generated and platform metadata updated!');
                 loadVideos();
             } else {
-                showAlert('danger', 'Failed to update YouTube description.');
+                showAlert('danger', 'Failed to update platform metadata.');
             }
         } catch (e) {
             showAlert('danger', 'Error: ' + e.message);
