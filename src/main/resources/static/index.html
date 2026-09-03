@@ -35,14 +35,20 @@
 <div class="container">
     <div id="alertBox"></div>
 
-    <div class="row mb-4">
-        <div class="col-md-12">
-            <div class="card p-3 d-flex flex-row align-items-center justify-content-between">
+    <div class="row mb-4 g-3">
+        <div class="col-md-8">
+            <div class="card p-3 d-flex flex-row align-items-center justify-content-between h-100">
                 <div>
                     <h5 class="m-0 fw-bold"><i class="bi bi-cpu text-info me-2"></i> Local AI Engine Status (Ollama / Llama3)</h5>
                     <small class="text-secondary">Generates high-reach hashtags for YouTube Videos & Shorts locally for $0 costs.</small>
                 </div>
                 <span class="badge bg-success p-2 fs-6"><i class="bi bi-check-circle me-1"></i> Active</span>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card p-3 h-100">
+                <h6 class="fw-bold mb-1"><i class="bi bi-diagram-3 text-warning me-2"></i> Extensible Adapter Architecture</h6>
+                <small class="text-secondary" id="registeredAdapters">Registered Adapters: Loading...</small>
             </div>
         </div>
     </div>
@@ -71,6 +77,11 @@
             } else {
                 statusEl.className = 'status-pill bg-warning text-dark';
                 statusEl.innerHTML = '<i class="bi bi-info-circle me-1"></i> Demo Mode (Missing client_secret.json)';
+            }
+
+            if (data.registeredPlatforms) {
+                document.getElementById('registeredAdapters').innerHTML =
+                    'Active Platform Adapters: <span class="badge bg-primary me-1">' + data.registeredPlatforms.join('</span><span class="badge bg-primary me-1">') + '</span>';
             }
         } catch (e) {
             console.error('Failed to check status:', e);

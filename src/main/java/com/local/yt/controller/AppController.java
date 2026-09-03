@@ -24,6 +24,7 @@ public class AppController {
     public ResponseEntity<Map<String, Object>> getStatus() {
         Map<String, Object> status = new HashMap<>();
         status.put("youtubeConfigured", workflowService.isYouTubeConfigured());
+        status.put("registeredPlatforms", workflowService.getRegisteredPlatforms());
         status.put("status", "UP");
         return ResponseEntity.ok(status);
     }

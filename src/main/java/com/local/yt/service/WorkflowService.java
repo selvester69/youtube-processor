@@ -1,5 +1,7 @@
 package com.local.yt.service;
 
+import com.local.yt.adapter.SocialPlatformAdapter;
+import com.local.yt.adapter.SocialPlatformRegistry;
 import com.local.yt.model.VideoItem;
 import com.local.yt.repository.VideoRepository;
 import org.slf4j.Logger;
@@ -15,18 +17,19 @@ public class WorkflowService {
 
     private static final Logger logger = LoggerFactory.getLogger(WorkflowService.class);
 
-    private final YouTubeService youtubeService;
+    private final SocialPlatformRegistry platformRegistry;
     private final OllamaService ollamaService;
     private final VideoRepository videoRepository;
 
-    public WorkflowService(YouTubeService youtubeService, OllamaService ollamaService, VideoRepository videoRepository) {
-        this.youtubeService = youtubeService;
+    public WorkflowService(SocialPlatformRegistry platformRegistry, OllamaService ollamaService, VideoRepository videoRepository) {
+        this.platformRegistry = platformRegistry;
         this.ollamaService = ollamaService;
         this.videoRepository = videoRepository;
     }
 
     public List<VideoItem> fetchAndSyncVideos() {
-        List<VideoItem> ytVideos = youtubeService.getMyRecentVideos();
+        SocialPlatformAdapter adapter = platformRegistry.getAdapter("YOUTUBE");
+        List<VideoItem> ytVideos = adapter.fetchContent();
         for (VideoItem video : ytVideos) {
             Optional<VideoItem> existing = videoRepository.findById(video.getVideoId());
             if (existing.isPresent()) {
@@ -48,8 +51,8 @@ public class WorkflowService {
     public VideoItem analyzeAndGenerateHashtags(String videoId) {
         VideoItem video = videoRepository.findById(videoId)
                 .orElseGet(() -> {
-                    // Search in YouTube service directly if not yet in DB
-                    return youtubeService.getMyRecentVideos().stream()
+                    SocialPlatformAdapter adapter = platformRegistry.getAdapter("YOUTUBE");
+                    return adapter.fetchContent().stream()
                             .filter(v -> v.getVideoId().equals(videoId))
                             .findFirst()
                             .orElseThrow(() -> new IllegalArgumentException("Video ID not found: " + videoId));
@@ -72,7 +75,8 @@ public class WorkflowService {
             video = videoRepository.findById(videoId).orElseThrow();
         }
 
-        boolean updated = youtubeService.updateVideoDescription(videoId, video.getGeneratedHashtags());
+        SocialPlatformAdapter adapter = platformRegistry.getAdapter("YOUTUBE");
+        boolean updated = adapter.updateDescription(videoId, video.getGeneratedHashtags());
         video.setUpdatedOnYoutube(updated);
         return videoRepository.save(video);
     }
@@ -82,6 +86,10 @@ public class WorkflowService {
     }
 
     public boolean isYouTubeConfigured() {
-        return youtubeService.isConfigured();
+        return platformRegistry.getAdapter("YOUTUBE").isConfigured();
+    }
+
+    public List<String> getRegisteredPlatforms() {
+        return platformRegistry.getRegisteredPlatforms();
     }
 }
